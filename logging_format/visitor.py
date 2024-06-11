@@ -2,33 +2,30 @@
 AST Visitor to identify logging expressions.
 
 """
-from sys import version_info
-
 from ast import (
     Add,
     Call,
-    keyword,
-    iter_child_nodes,
+    FormattedValue,
     Mod,
     Name,
     NodeVisitor,
+    iter_child_nodes,
+    keyword,
 )
+from sys import version_info
 
 from logging_format.violations import (
+    ERROR_EXC_INFO_VIOLATION,
+    EXCEPTION_VIOLATION,
+    EXTRA_ATTR_CLASH_VIOLATION,
+    FSTRING_VIOLATION,
     PERCENT_FORMAT_VIOLATION,
+    REDUNDANT_EXC_INFO_VIOLATION,
     STRING_CONCAT_VIOLATION,
     STRING_FORMAT_VIOLATION,
-    FSTRING_VIOLATION,
     WARN_VIOLATION,
     WHITELIST_VIOLATION,
-    EXTRA_ATTR_CLASH_VIOLATION,
-    EXCEPTION_VIOLATION,
-    ERROR_EXC_INFO_VIOLATION,
-    REDUNDANT_EXC_INFO_VIOLATION,
 )
-
-if version_info >= (3, 6):
-    from ast import FormattedValue
 
 
 LOGGING_LEVELS = {
@@ -53,7 +50,7 @@ RESERVED_ATTRS = {
 class LoggingVisitor(NodeVisitor):
 
     def __init__(self, whitelist=None):
-        super(LoggingVisitor, self).__init__()
+        super().__init__()
         self.current_logging_call = None
         self.current_logging_argument = None
         self.current_logging_level = None
@@ -82,7 +79,7 @@ class LoggingVisitor(NodeVisitor):
         if self.within_logging_statement():
             if self.within_logging_argument() and self.is_format_call(node):
                 self.violations.append((node, STRING_FORMAT_VIOLATION))
-                super(LoggingVisitor, self).generic_visit(node)
+                super().generic_visit(node)
                 return
 
         logging_level = self.detect_logging_level(node)
@@ -92,7 +89,7 @@ class LoggingVisitor(NodeVisitor):
 
         # CASE 2: We're in some other statement
         if logging_level is None:
-            super(LoggingVisitor, self).generic_visit(node)
+            super().generic_visit(node)
             return
 
         # CASE 3: We're entering a new logging statement
@@ -111,7 +108,7 @@ class LoggingVisitor(NodeVisitor):
             if index > 1 and isinstance(child, keyword) and child.arg == "extra":
                 self.current_extra_keyword = child
 
-            super(LoggingVisitor, self).visit(child)
+            super().visit(child)
 
             self.current_logging_argument = None
             self.current_extra_keyword = None
@@ -131,7 +128,7 @@ class LoggingVisitor(NodeVisitor):
             # handle string concat
             if isinstance(node.op, Add):
                 self.violations.append((node, STRING_CONCAT_VIOLATION))
-        super(LoggingVisitor, self).generic_visit(node)
+        super().generic_visit(node)
 
     def visit_Dict(self, node):
         """
@@ -154,19 +151,18 @@ class LoggingVisitor(NodeVisitor):
             for value in node.values:
                 self.check_exception_arg(value)
 
-        super(LoggingVisitor, self).generic_visit(node)
+        super().generic_visit(node)
 
     def visit_JoinedStr(self, node):
         """
         Process f-string arguments.
 
         """
-        if version_info >= (3, 6):
-            if self.within_logging_statement():
-                if any(isinstance(i, FormattedValue) for i in node.values):
-                    if self.within_logging_argument():
-                        self.violations.append((node, FSTRING_VIOLATION))
-                        super(LoggingVisitor, self).generic_visit(node)
+        if self.within_logging_statement():
+            if any(isinstance(i, FormattedValue) for i in node.values):
+                if self.within_logging_argument():
+                    self.violations.append((node, FSTRING_VIOLATION))
+                    super().generic_visit(node)
 
     def visit_keyword(self, node):
         """
@@ -184,7 +180,7 @@ class LoggingVisitor(NodeVisitor):
         if self.should_check_extra_exception(node):
             self.check_exception_arg(node.value)
 
-        super(LoggingVisitor, self).generic_visit(node)
+        super().generic_visit(node)
 
     def visit_ExceptHandler(self, node):
         """
@@ -193,11 +189,11 @@ class LoggingVisitor(NodeVisitor):
         """
         name = self.get_except_handler_name(node)
         if not name:
-            super(LoggingVisitor, self).generic_visit(node)
+            super().generic_visit(node)
             return
 
         self.current_except_names.append(name)
-        super(LoggingVisitor, self).generic_visit(node)
+        super().generic_visit(node)
         self.current_except_names.pop()
 
     def detect_logging_level(self, node):
