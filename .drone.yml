@@ -82,7 +82,7 @@ steps:
       - export version=$(cat .bumpversion.cfg | awk '/current_version / {print $3}')
       - aws codeartifact login --tool pip --repository globality-pypi-local --domain globality --domain-owner $AWS_ACCOUNT_ID --region us-east-1
       - python setup.py sdist bdist_wheel
-      - aws codeartifact login --tool twine --domain globality --repository globality-pypi-local --region us-east-1 && twine upload --repository codeartifact dist/${NAME}-${version}* --verbose
+      - aws codeartifact login --tool twine --domain globality --repository globality-pypi-local --region us-east-1 && twine upload --repository codeartifact dist/flake8_logging_format-${version}* --verbose
     when:
       branch:
         - master
@@ -102,7 +102,7 @@ steps:
       - export version=$(cat .bumpversion.cfg | awk '/current_version / {print $3}')
       - echo "Publishing ${version}"
       - python setup.py sdist bdist_wheel
-      - twine upload --repository pypi dist/${NAME}-${version}* --non-interactive --verbose
+      - twine upload --repository pypi dist/flake8_logging_format-${version}* --non-interactive --verbose
     when:
       branch:
         - master
