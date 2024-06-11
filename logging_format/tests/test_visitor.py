@@ -2,9 +2,8 @@
 Visitor tests.
 
 """
-from ast import parse
 import logging
-from sys import version_info
+from ast import parse
 from textwrap import dedent
 
 from hamcrest import (
@@ -12,24 +11,24 @@ from hamcrest import (
     contains,
     empty,
     equal_to,
+    has_item,
     has_length,
     is_,
-    has_item
 )
 
 from logging_format.violations import (
+    ERROR_EXC_INFO_VIOLATION,
+    EXCEPTION_VIOLATION,
+    EXTRA_ATTR_CLASH_VIOLATION,
+    FSTRING_VIOLATION,
     PERCENT_FORMAT_VIOLATION,
+    REDUNDANT_EXC_INFO_VIOLATION,
     STRING_CONCAT_VIOLATION,
     STRING_FORMAT_VIOLATION,
-    FSTRING_VIOLATION,
     WARN_VIOLATION,
     WHITELIST_VIOLATION,
-    EXTRA_ATTR_CLASH_VIOLATION,
-    EXCEPTION_VIOLATION,
-    ERROR_EXC_INFO_VIOLATION,
-    REDUNDANT_EXC_INFO_VIOLATION,
 )
-from logging_format.visitor import LoggingVisitor, RESERVED_ATTRS
+from logging_format.visitor import RESERVED_ATTRS, LoggingVisitor
 from logging_format.whitelist import Whitelist
 
 
@@ -353,17 +352,16 @@ def test_fstring():
     F-Strings are not ok in logging statements.
 
     """
-    if version_info >= (3, 6):
-        tree = parse(dedent("""\
+    tree = parse(dedent("""\
             import logging
             name = "world"
             logging.info(f"Hello {name}")
         """))
-        visitor = LoggingVisitor()
-        visitor.visit(tree)
+    visitor = LoggingVisitor()
+    visitor.visit(tree)
 
-        assert_that(visitor.violations, has_length(1))
-        assert_that(visitor.violations[0][1], is_(equal_to(FSTRING_VIOLATION)))
+    assert_that(visitor.violations, has_length(1))
+    assert_that(visitor.violations[0][1], is_(equal_to(FSTRING_VIOLATION)))
 
 
 def test_string_concat():

@@ -5,7 +5,7 @@ A logging extra keyword argument whitelist.
 from pkg_resources import iter_entry_points
 
 
-class Whitelist(object):
+class Whitelist:
     """
     A pluggable whitelist.
 

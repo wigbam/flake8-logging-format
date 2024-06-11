@@ -9,7 +9,7 @@ from logging_format.whitelist import Whitelist
 __version__ = "0.9.0"
 
 
-class LoggingFormatValidator(object):
+class LoggingFormatValidator:
     name = "logging-format"
     version = __version__
     enable_extra_whitelist = False
